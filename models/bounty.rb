@@ -2,8 +2,9 @@ require ('PG')
 
 class Bounty
 
-  attr_reader :name, :species, :bounty_value, :danger_level
-
+  attr_accessor :name, :species, :bounty_value, :danger_level
+  attr_reader :id
+  
   def initialize(options)
     @name = options['name']
     @species = options['species']
@@ -22,25 +23,15 @@ class Bounty
     "
 
     db.prepare("display all", sql)
-    db.exec_prepared("display all")
+    bounties = db.exec_prepared("display all")
 
     db.close()
+
+    list_of_all_bounties = bounties.map {|bounties| Bounty.new(bounties)}
+
+    return list_of_all_bounties
   end
 
-  def PizzaOrder.all
-    db = PG.connect( { dbname: "pizza_shop", host: "localhost" })
-
-    sql = "SELECT * FROM pizza_orders ORDER BY name;"
-    db.prepare("get all", sql)
-    orders = db.exec_prepared("get all")
-    # binding.pry
-
-    db.close()
-
-    pizza_order_objects = orders.map { |order_hash| PizzaOrder.new(order_hash) }
-
-    return pizza_order_objects
-end
 
   def save
     db = PG.connect({dbname: 'bounty_hunter', host: 'localhost'})
@@ -52,7 +43,7 @@ end
     ($1,$2,$3,$4)
     ;
     "
-    values = [@name, @species, @bounty_value, @danger_level, @id]
+    values = [@name, @species, @bounty_value, @danger_level]
 
     db.prepare("save it", sql)
     db.exec_prepared("save it", values)
@@ -66,9 +57,9 @@ end
     sql = "
     UPDATE bounties
     SET (name, species, bounty_value, danger_level)
-    = ($1, $2, $3, $4)
+    = ($1,$2,$3,$4)
     WHERE
-    id = 5
+    id = $5
     ;
     "
     values = [@name, @species, @bounty_value, @danger_level, @id]
@@ -96,8 +87,6 @@ end
     db.exec_prepared("delete", values)
 
     db.close()
-
-
   end
 
 
